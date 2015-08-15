@@ -60,25 +60,29 @@ foreach($agents as $agent){
 	}
 }
 
-if(count($scenario1_logout) > 0){
-	$message_body .= "<p>The following agents were logged out for having status set to Not Accepting Chats and agent has never chatted.</p>";
-	foreach($scenario1_logout as $agent_logged_out){	
-		$message_body .= $agent_logged_out->name . " " . $agent_logged_out->login . "<br/><br/>"; // Add agent information to notification text
-		$user_updates = array("status"=>"offline");
-		notify($agent_logged_out,1);
-		//$result = $LiveChatAPI->agents->update($agent_logged_out->login, $user_updates); // Log agent out of Livechat system
+// Only execute if the number of agents currently online exceeds 3
+// This conditional needs to be moved into a better logical location
+if(count($online_agents) > 3){
+	if(count($scenario1_logout) > 0){
+		$message_body .= "<p>The following agents were logged out for having status set to Not Accepting Chats and agent has never chatted.</p>";
+		foreach($scenario1_logout as $agent_logged_out){	
+			$message_body .= $agent_logged_out->name . " " . $agent_logged_out->login . "<br/><br/>"; // Add agent information to notification text
+			$user_updates = array("status"=>"offline");
+			notify($agent_logged_out,1);
+			$result = $LiveChatAPI->agents->update($agent_logged_out->login, $user_updates); // Log agent out of Livechat system
+		}
+	}
+	if(count($scenario2_logout) > 0){
+		$message_body .= "<p>The following agents were logged out for having status set to Not Accepting Chats and agent's last chat ended over an hour ago.</p>";
+		foreach($scenario2_logout as $agent_logged_out){	
+			$message_body .= $agent_logged_out->name . " " . $agent_logged_out->login . "<br/><br/>"; // Add agent information to notification text
+			$user_updates = array("status"=>"offline");
+			notify($agent_logged_out,2);
+			$result = $LiveChatAPI->agents->update($agent_logged_out->login, $user_updates); // Log agent out of Livechat system
+		}
 	}
 }
-if(count($scenario2_logout) > 0){
-	$message_body .= "<p>The following agents were logged out for having status set to Not Accepting Chats and agent's last chat ended over an hour ago.</p>";
-	foreach($scenario2_logout as $agent_logged_out){	
-		$message_body .= $agent_logged_out->name . " " . $agent_logged_out->login . "<br/><br/>"; // Add agent information to notification text
-		$user_updates = array("status"=>"offline");
-		notify($agent_logged_out,2);
-		//$result = $LiveChatAPI->agents->update($agent_logged_out->login, $user_updates); // Log agent out of Livechat system
-	}
-}
-print $message_body;
+//print $message_body;
 
 $number_online_agents = count($online_agents);
 $notification_recipient = "milder.lisondra@jewsforjesus.org";
@@ -133,7 +137,7 @@ function notify($agent,$scenario = 1){
 	$message_body .= "If you have the LiveChat app on your phone or computer set to start automatically when it boots or re-boots, please turn off that option if you don't plan to chat.";
 	$message_body .= ' <a href="http://jforj.org/net/online-evangelism/livechat-tips-and-training/#logout">See tips on how to do this here.</a></p>';
 
-	mail("web@jewsforjesus.org",$subject,$message_body, $headers);
+	mail($agent->login,$subject,$message_body, $headers);
 }
 
 function print_nicely($arg){
